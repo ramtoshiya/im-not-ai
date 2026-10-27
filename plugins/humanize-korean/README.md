@@ -11,9 +11,18 @@ directories. The three Claude runtime agents are included. Hermes uses the
 upstream role contracts through `delegate_task`, with
 sequential execution when delegation is unavailable.
 
-The light, standard, and heavy routes retain diagnosis, deterministic gates,
-strict chunk reassembly, and finalization. This edits awkward Korean, not facts,
-and does not remove or verify watermarks. Review warnings before publishing.
+Korean publication text, including new thread replies, uses the Korean skill
+even without an editing request. For new writing it reads the Korean rulebook,
+drafts from the caller's facts, and returns only the requested result. It does
+not create editing workspaces or claim source-relative gate results for a new
+draft. Ordinary private chat and code/configuration-only changes are excluded.
+English-only text belongs to the separate `humanize` skill. Bilingual text uses
+both skills for their own passages.
+
+Supplied-source editing keeps the light, standard, and heavy routes, including
+diagnosis, deterministic gates, strict chunk reassembly, and finalization.
+The skill does not change facts or remove or verify watermarks. Review warnings
+before publishing. Calling the skill does not grant permission to publish.
 
 ## Requirements
 

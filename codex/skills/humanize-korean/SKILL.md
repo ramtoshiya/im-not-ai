@@ -1,11 +1,19 @@
 ---
 name: humanize-korean
-description: AI(ChatGPT·Claude·Gemini)가 쓴 한글 텍스트를 사람이 쓴 글처럼 진단·윤문·검증한다. 번역투, 기계적 병렬, 관용구, 피동, 접속사, 균일한 리듬 등 10대 카테고리 85개 패턴을 다루며 route_hint에 따라 light·standard·heavy 경로를 실행한다. "AI 티 없애줘", "AI 윤문", "사람이 쓴 것처럼", "번역투 고쳐", "정밀 모드", "2차 윤문", "이 문단만 다시", "humanize Korean" 요청에 사용한다. 단순 맞춤법 교정, 번역, 사실이나 내용을 추가하는 재작성에는 사용하지 않는다.
+description: This skill should be used before writing/editing Korean files, commits, pull requests, emails, posts, and published thread replies, even without a rewriting request. Handle new Korean writing and supplied Korean text humanization. Choose by source/output language, not instruction language. For mixed Korean/English writing or rewriting, invoke BOTH this skill and humanize together before drafting, one per language. English-only text and code/config-only changes belong to humanize. Skip private chat, read-only discussion, translation-only and spelling-only unless also publishing, writing files, or humanizing.
 ---
 
 # Humanize Korean for Codex
 
 Codex의 파일·셸·협업 에이전트 기능으로 진단, 겨냥 윤문, 결정적 게이트, finalize를 실행한다. 스킬 리소스는 이 `SKILL.md`가 있는 실제 디렉터리(`SKILL_ROOT`)를 기준으로 해석하고, 사용자 산출물은 현재 작업 디렉터리(`cwd`)의 `_workspace/`에 쓴다.
+
+## 새 글 작성과 언어 분기 {:#writing-mode}
+
+원문 또는 산출물 언어로 분기한다. 한국어 게시글·스레드 댓글·이메일·문서·커밋 메시지는 명시적 윤문 요청이 없어도 맡는다. 영어만 쓰는 작업은 host의 `humanize` 스킬로 넘긴다. 혼합 글은 두 스킬을 해당 언어에 각각 적용한다. 비공개 일반 대화, 코드·설정만의 변경, 게시·파일 작성 없는 조사·설명, 단순 번역·맞춤법 교정은 자동 대상이 아니다.
+
+윤문할 원문이 없는 새 글은 실행 준비 1번의 실제 스킬 디렉터리 해석만 수행하고 `${SKILL_ROOT}/references/quick-rules.md`를 읽는다. caller의 사실·수치·인용·불확실성을 보존하면서 필요한 길이로 초안을 쓰고 룰북으로 문체를 점검한 뒤, caller가 요구한 결과만 반환한다. 근거 없는 주장·성과·약속은 추가하지 않는다. 원문 윤문 또는 정밀 검증을 명시적으로 요청했다면 이 간편 경로가 아니라 아래 전체 workflow를 따른다.
+
+새 글에는 빈 원문, `_workspace/`, 상태 배너, summary, 변경률 검증을 만들지 않는다. 파일은 caller가 요구한 경로에만 쓰며 게이트를 실행하지 않았다면 통과했다고 말하지 않는다. 리소스를 읽을 수 없으면 제한을 보고한다. 실제 게시 권한은 caller의 승인과 도구 권한을 따른다. 다음 앵커·finding·게이트 규칙은 제공된 원문의 윤문에 적용한다.
 
 ## 철칙
 

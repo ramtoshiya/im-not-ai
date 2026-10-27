@@ -1,7 +1,7 @@
 ---
 name: humanize-korean
 version: "2.3.2"
-description: AI(ChatGPT·Claude·Gemini 등)가 쓴 한글 텍스트를 "사람이 쓴 글처럼" 윤문해주는 오케스트레이터 스킬. 번역투·영어 인용 과다·기계적 병렬·관용구·피동태 남용·접속사 남발·리듬 균일성·이모지/불릿 과다 등 10대 카테고리 85개 AI 티 패턴을 탐지·분류해 내용은 한 글자도 건드리지 않고 문체·리듬·표현만 자연스러운 한국어로 재작성한다. shim의 route_hint(light|standard|heavy)로 경로를 정해 잘 쓴 글은 1콜, 표준은 2콜, 중증·장문만 3+콜(진단→겨냥 윤문→finalize)로 처리한다. 트리거 — "AI 티 없애줘", "AI 같은 글 자연스럽게", "GPT/ChatGPT 문체", "AI 번역투 고쳐", "사람이 쓴 것처럼 윤문", "AI 윤문", "ChatGPT 티 제거", "한글 AI 탐지·윤문", "AI 글 사람처럼", "번역투 제거", "영어 인용 많은 글 윤문", "AI 글 티 안 나게", "휴머나이저", "humanize Korean", "AI detector bypass 한글". 후속 작업 — "특정 카테고리만 다시", "윤문 강도 조정", "장르 바꿔서", "이 문단만", "2차 윤문" 도 모두 이 스킬. 단순 맞춤법·오탈자 교정은 직접 처리, 번역은 번역 스킬, 내용 추가·삭제를 동반한 재작성은 별도 집필 스킬.
+description: This skill should be used before writing/editing Korean files, commits, pull requests, emails, posts, and published thread replies, even without a rewriting request. Handle new Korean writing and supplied Korean text humanization. Choose by source/output language, not instruction language. For mixed Korean/English writing or rewriting, invoke BOTH this skill and humanize together before drafting, one per language. English-only text and code/config-only changes belong to humanize. Skip private chat, read-only discussion, translation-only and spelling-only unless also publishing, writing files, or humanizing.
 ---
 
 # Humanize Korean — AI 한글 티 제거 오케스트레이터 (v2.3)
@@ -10,6 +10,20 @@ description: AI(ChatGPT·Claude·Gemini 등)가 쓴 한글 텍스트를 "사람�
 > **v2.3.1** — 경로 해석·런타임 경계·계약 정합 수정 회차(외부 제보 반영). 기능 변경 없음.
 > **v2.3.0** — 구조 수렴 게이트(`verify_gates.py` 4축: 목표달성·대구 전멸·수치·golden) + 진단 슬림 인덱스(`diagnosis-rules.md`, taxonomy 83%↓). (v2.2: route_hint 3경로 + 단일 콜 우선)
 > 버전 히스토리·실측 근거·테스트 시나리오: [`${CLAUDE_SKILL_DIR}/references/design-notes.md`](references/design-notes.md)
+
+## 작업 모드와 언어 분기 {:#writing-mode}
+
+지시 언어가 아니라 윤문할 원문 또는 새로 쓸 산출물의 언어로 판단한다. 한국어 게시글, 이슈 댓글, 이메일, 문서, 커밋 메시지는 윤문 요청이 없어도 이 스킬이 맡는다. 영어만 쓰는 작업은 host에 표시된 `humanize` 스킬 이름으로 넘긴다. 한영 혼합 글은 두 스킬을 각각 해당 언어에 적용하고 공통 사실과 각 문장의 언어를 유지한다. 비공개 일반 대화, 코드·설정만 바꾸는 작업, 게시·파일 작성 없는 조사·설명, 번역만 또는 맞춤법만 요청한 경우에는 자동으로 적용하지 않는다.
+
+**새 글 작성 모드:** 사용자가 윤문할 원문을 제공하지 않고 사실·메모·요구사항이나 스레드 문맥에서 새 게시글을 요청한 경우 아래 절차만 수행한 뒤 종료한다. 명시적인 원문 윤문이나 정밀 검증 요청은 아래 Phase 0부터 기존 전체 workflow를 따른다.
+
+1. `${CLAUDE_SKILL_DIR}/references/quick-rules.md`를 읽는다. 리소스를 읽을 수 없으면 그 제한을 알리고 검증했다고 주장하지 않는다.
+2. caller가 제공한 사실, 수치, 이름, 인용, 미확인 사항과 답변의 목적을 잡고 필요한 길이의 한국어 초안을 쓴다. 새로운 사실·성과·약속·근거를 만들어 넣지 않는다. caller의 말투와 형식을 따른다.
+3. 룰북에 따라 번역투, 빈 강조, 기계적인 병렬, 불필요한 접속사와 새 AI 상투구를 걷어낸다. 제공된 사실·수치·인용과 불확실성은 그대로인지 확인한다. 내용이 이미 자연스러우면 억지로 바꾸지 않는다.
+4. caller가 요구한 산출물만 반환한다. 댓글은 짧으면 짧게 쓰며 상태 배너, run_id, 품질 등급, summary 주석을 붙이지 않는다. caller가 파일을 요구하지 않았다면 `_workspace/`나 임시 파일을 만들지 않는다. 원문이 없는 새 글에는 원문 대비 변경률 게이트를 적용하거나 통과했다고 주장하지 않는다.
+5. 게시 자체는 caller의 승인과 도구 권한을 따른다. 이 스킬의 호출은 외부 게시·설치·설정 변경 권한을 추가하지 않는다.
+
+다음의 원문 앵커·finding·변경률·진단·게이트 규칙은 **제공된 원문의 윤문 모드**에 적용한다. 새 글 작성 모드에서 빈 원문을 만들어 윤문 pipeline에 넣지 않는다.
 
 ## Phase 0: 컨텍스트 확인 및 경로 결정
 

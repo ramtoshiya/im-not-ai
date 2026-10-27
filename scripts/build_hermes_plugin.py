@@ -59,7 +59,7 @@ def expected_files():
         files[target] = (ROOT / source).read_bytes()
     manifest = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
     manifest.update(
-        version="2.3.2-hermes.1",
+        version="2.3.2-hermes.2",
         skills=["./skills/humanize-korean"],
         repository="https://github.com/ramtoshiya/im-not-ai",
         homepage="https://github.com/ramtoshiya/im-not-ai",
